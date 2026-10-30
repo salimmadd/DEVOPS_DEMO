@@ -1,6 +1,7 @@
 {
-    "/api": {
-      "target": "http://44.218.110.160:8081/",
-      "secure": false
-    }
+  "/user": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true
   }
+}

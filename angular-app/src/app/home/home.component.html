@@ -1,26 +1,131 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+<main class="directory-page">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="People home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>FIELDNOTES<span class="brand-dot">.</span></span>
+    </a>
+    <div class="topbar-meta"><span class="live-dot"></span> PEOPLE DIRECTORY</div>
+  </header>
 
-<div class="centered-div">
-  <table class="table-container">
-    <thead>
-      <tr>
-        <td class="td">ID Nouran Zouabi</td>
-        <td class="td">First Name</td>
-        <td class="td">Last Name</td>
-        <td class="td">Action</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let user of usersList">
-        <td class="td">{{user.id}}</td>
-        <td class="td">{{user.firstName}}</td>
-        <td class="td">{{user.lastName}}</td>
-        <td> <i class="fa fa-trash" aria-hidden="true" (click)="deleteUser(user?.id || '')"></i></td>
-      </tr>
-    </tbody>
-  </table>
-  <input type="text" placeholder="First Name" #firstname>
-  <input type="text" placeholder="Last Name" #lastname style="margin-top: 10px;">
-  <button (click)="addUser(firstname.value,lastname.value)" style="margin-top: 30px;">add User</button>
+  <section class="directory-content" aria-labelledby="page-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">YOUR TEAM, AT A GLANCE</p>
+        <h1 id="page-title">People<span class="heading-period">.</span></h1>
+      </div>
+      <div class="member-count" aria-live="polite">
+        <span class="count-number">{{ usersList.length }}</span>
+        <span class="count-label">{{ usersList.length === 1 ? 'person' : 'people' }}<br>in directory</span>
+      </div>
+    </div>
 
-</div>
+    <form class="add-form" #userForm="ngForm" (ngSubmit)="addUser(userForm)">
+      <div class="form-intro">
+        <span class="form-icon" aria-hidden="true">+</span>
+        <div>
+          <h2>Add someone</h2>
+          <p>New to the directory</p>
+        </div>
+      </div>
+      <label class="field">
+        <span>First name</span>
+        <input
+          type="text"
+          name="firstName"
+          [(ngModel)]="firstName"
+          placeholder="e.g. Alex"
+          autocomplete="given-name"
+          maxlength="80"
+          required>
+      </label>
+      <label class="field">
+        <span>Last name</span>
+        <input
+          type="text"
+          name="lastName"
+          [(ngModel)]="lastName"
+          placeholder="e.g. Morgan"
+          autocomplete="family-name"
+          maxlength="80"
+          required>
+      </label>
+      <button class="add-button" type="submit" [disabled]="userForm.invalid || isSubmitting">
+        <span>{{ isSubmitting ? 'Adding...' : 'Add person' }}</span>
+        <span class="button-arrow" aria-hidden="true">↗</span>
+      </button>
+    </form>
+
+    <div class="feedback" *ngIf="feedbackMessage" [class.feedback-error]="feedbackType === 'error'" role="status" aria-live="polite">
+      <span class="feedback-mark" aria-hidden="true">{{ feedbackType === 'error' ? '!' : '✓' }}</span>
+      {{ feedbackMessage }}
+    </div>
+
+    <section class="list-section" aria-labelledby="list-title">
+      <div class="list-toolbar">
+        <div class="list-heading">
+          <h2 id="list-title">Directory</h2>
+          <span class="list-total">{{ filteredUsers.length }} {{ filteredUsers.length === 1 ? 'entry' : 'entries' }}</span>
+        </div>
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Search people</span>
+          <input type="search" [(ngModel)]="searchTerm" name="search" placeholder="Find a person..." autocomplete="off">
+          <kbd>/</kbd>
+        </label>
+      </div>
+
+      <div class="directory-table-wrap">
+        <table class="directory-table">
+          <thead>
+            <tr>
+              <th scope="col">Person</th>
+              <th scope="col">First name</th>
+              <th scope="col">Last name</th>
+              <th scope="col" class="id-column">ID</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers; let rowIndex = index">
+              <td data-label="Person">
+                <div class="person-cell">
+                  <span class="avatar" [class]="'avatar avatar-' + (rowIndex % 5)">
+                    {{ (user.firstName || '?').charAt(0) }}{{ (user.lastName || '').charAt(0) }}
+                  </span>
+                  <span class="person-name">{{ user.firstName }} {{ user.lastName }}</span>
+                </div>
+              </td>
+              <td data-label="First name">{{ user.firstName }}</td>
+              <td data-label="Last name">{{ user.lastName }}</td>
+              <td data-label="ID" class="id-column"><span class="id-value">#{{ user.id }}</span></td>
+              <td class="action-cell">
+                <button
+                  class="delete-button"
+                  type="button"
+                  [disabled]="!user.id || deletingUserId === user.id"
+                  [attr.aria-label]="'Remove ' + user.firstName + ' ' + user.lastName"
+                  title="Remove person"
+                  (click)="deleteUser(user.id || '')">
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M4 6h12M8 6V4h4v2m-6 0 .7 10h6.6L14 6m-5 3v4m2-4v4" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="isLoading" class="empty-row">
+              <td colspan="5"><span class="loading-dot"></span> Loading the directory...</td>
+            </tr>
+            <tr *ngIf="!isLoading && filteredUsers.length === 0" class="empty-row">
+              <td colspan="5">
+                <span class="empty-title">{{ searchTerm ? 'No matching people' : 'A fresh page' }}</span>
+                <span>{{ searchTerm ? 'Try another name or ID.' : 'Add the first person above to get started.' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer"><span class="footer-rule"></span><span>END OF DIRECTORY</span><span class="footer-rule"></span></div>
+    </section>
+    <footer class="page-footer"><span>FIELDNOTES / PEOPLE</span><span>MADE FOR THE DETAILS</span></footer>
+  </section>
+</main>

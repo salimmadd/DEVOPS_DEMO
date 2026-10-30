@@ -48,3 +48,25 @@ jobs:
       - name: Build frontend
         working-directory: angular-app
         run: npm run build
+
+  kubernetes:
+    name: Build images and validate Kubernetes manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t demo-backend:ci ./springboot/app
+
+      - name: Build frontend image
+        run: docker build -t demo-frontend:ci ./angular-app
+
+      - name: Validate Kubernetes manifests
+        run: >-
+          docker run --rm
+          -v "${{ github.workspace }}:/work"
+          -w /work
+          ghcr.io/yannh/kubeconform:v0.6.7
+          -strict -summary kubernetes
