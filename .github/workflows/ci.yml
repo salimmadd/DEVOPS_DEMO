@@ -24,7 +24,7 @@ jobs:
 
       - name: Build and test backend
         working-directory: springboot/app
-        run: ./mvnw test
+        run: bash ./mvnw test
 
   frontend:
     name: Frontend build
